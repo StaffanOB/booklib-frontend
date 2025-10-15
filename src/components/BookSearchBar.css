@@ -1,5 +1,6 @@
 .input-group {
-  padding: 2em;
+  padding: 1em;
+  min-width: 500px;
 }
 
 .input-group > select {
@@ -9,3 +10,4 @@
 .input-group > input[type="text"] {
     width: 70%;
 }
+

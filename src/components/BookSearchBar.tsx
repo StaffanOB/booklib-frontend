@@ -4,10 +4,12 @@ import SearchIcon from "@mui/icons-material/Search";
 function BookSearchBar() {
   return (
     <div className="input-group mb-3">
-      <select className="form-select" aria-label="Default select example">
-        <option selected>Free Search</option>
-        <option value="1">Book Title</option>
-        <option value="2">Author Name</option>
+      <select className="form-select" aria-label="Search type selection">
+        <option value="free" selected>
+          🔍 Free Search
+        </option>
+        <option value="title">📚 Book Title</option>
+        <option value="author">👤 Author Name</option>
       </select>
       <input
         type="text"
