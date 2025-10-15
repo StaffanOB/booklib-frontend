@@ -1,0 +1,11 @@
+.input-group {
+  padding: 2em;
+}
+
+.input-group > select {
+    width: 50%;
+}
+
+.input-group > input[type="text"] {
+    width: 70%;
+}
