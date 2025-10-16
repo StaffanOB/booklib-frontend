@@ -76,7 +76,7 @@ pipeline {
                         
                         // Deploy on test server
                         sh """
-                            ssh jenkins@${TEST_SERVER} '
+                            ssh jenkins@${TEST_SERVER} "
                                 # Load the Docker image
                                 docker load < /tmp/${DOCKER_IMAGE}-${DOCKER_TAG}.tar
                                 
@@ -92,21 +92,21 @@ pipeline {
                                     ${DOCKER_IMAGE}:${DOCKER_TAG}
                                 
                                 # Cleanup old images (keep last 3 builds)
-                                docker images ${DOCKER_IMAGE} --format "{{.Tag}}" | grep -E "^[0-9]+$" | sort -nr | tail -n +4 | xargs -r docker rmi ${DOCKER_IMAGE}: || true
+                                docker images ${DOCKER_IMAGE} --format '{{.Tag}}' | grep -E '^[0-9]+\$' | sort -nr | tail -n +4 | xargs -r docker rmi ${DOCKER_IMAGE}: || true
                                 
                                 # Clean up tar file
                                 rm -f /tmp/${DOCKER_IMAGE}-${DOCKER_TAG}.tar
                                 
                                 # Verify deployment
-                                echo "Verifying deployment..."
+                                echo 'Verifying deployment...'
                                 sleep 5
                                 if docker ps | grep ${CONTAINER_NAME}; then
-                                    echo "✅ Deployment successful! Application is running on http://${TEST_SERVER}:${CONTAINER_PORT}"
+                                    echo '✅ Deployment successful! Application is running on http://${TEST_SERVER}:${CONTAINER_PORT}'
                                 else
-                                    echo "❌ Deployment failed!"
+                                    echo '❌ Deployment failed!'
                                     exit 1
                                 fi
-                            '
+                            "
                         """
                     }
                 }
