@@ -1,6 +1,5 @@
 # BookLib Frontend - AI Coding Instructions
 
-
     ## Project Overview
 
     tools {React 18 + TypeScript + Vite frontend for a book search application. Uses Bootstrap 5 for styling with Material-UI icons, currently displaying static book data but architected for future API integration.
@@ -9,13 +8,13 @@
 
     }## Architecture & Component Structure
 
-    
+
 
     stages {### Component Hierarchy
 
         stage('Checkout') {- `App.tsx` - Main container with hardcoded book data and search bar
 
-            steps {- `BookSearchBar.tsx` - Search interface with dropdown (Free Search/Title/Author) 
+            steps {- `BookSearchBar.tsx` - Search interface with dropdown (Free Search/Title/Author)
 
                 checkout scm- `BookSearchResultItem.tsx` - Individual book display cards with author, year, title, description
 
@@ -35,7 +34,7 @@
 
         }## Development Workflow
 
-        
+
 
         stage('Build') {### Essential Commands
 
@@ -122,11 +121,13 @@
     }
 
 }## Testing Strategy
+
 - **Unit Tests**: Planned for component testing
 - **GUI Tests**: Robot Framework tests will be maintained in separate repository
 - **Current Status**: No testing framework configured yet
 
 ## Deployment & CI/CD
+
 - **Jenkins**: Requires `Jenkinsfile` for CI/CD pipeline
 - **Containerization**: Builds into Docker container for deployment
 - **Architecture**: Single page application (no routing planned)

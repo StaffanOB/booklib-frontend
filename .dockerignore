@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Development files
+.git/
+.gitignore
+*.md
+*.log
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+coverage/
+*.test.js
+
+# Docker files (don't copy these into the container)
+Dockerfile
+.dockerignore
+
+# CI/CD files
+Jenkinsfile
+.github/
