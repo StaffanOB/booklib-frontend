@@ -34,16 +34,17 @@ pipeline {
             steps {
                 script {
                     echo "Testing the Docker container locally"
+                    def testPort = 8000 + env.BUILD_NUMBER.toInteger()
                     sh """
-                        # Run container briefly to test
-                        docker run -d --name test-${DOCKER_IMAGE}-${BUILD_NUMBER} -p 8080:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
-                        sleep 10
+                        # Run container briefly to test (using dynamic port to avoid conflicts)
+                        docker run -d --name test-${DOCKER_IMAGE}-${BUILD_NUMBER} -p ${testPort}:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        sleep 5
                         
                         # Check if container is running
                         if docker ps | grep test-${DOCKER_IMAGE}-${BUILD_NUMBER}; then
-                            echo "Container test passed"
+                            echo "✅ Container test passed - listening on port ${testPort}"
                         else
-                            echo "Container test failed"
+                            echo "❌ Container test failed"
                             exit 1
                         fi
                         
