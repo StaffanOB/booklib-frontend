@@ -72,6 +72,11 @@ pipeline {
                     echo "Deploying to test server: ${DEPLOY_SERVER}"
                     
                     sshagent(['deploy-key']) {
+                        // Ensure deploy directory exists first
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} "mkdir -p ${DEPLOY_PATH}"
+                        """
+                        
                         // Copy image and compose files to test server
                         sh """
                             scp -o StrictHostKeyChecking=no ${DOCKER_IMAGE}-${DOCKER_TAG}.tar ${DEPLOY_USER}@${DEPLOY_SERVER}:/tmp/
@@ -81,8 +86,7 @@ pipeline {
                         // Deploy frontend service independently
                         sh """
                             ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} "
-                                # Ensure deploy path exists
-                                mkdir -p ${DEPLOY_PATH}
+                                # Change to deploy directory
                                 cd ${DEPLOY_PATH}
                                 
                                 # Create external network if it doesn't exist
