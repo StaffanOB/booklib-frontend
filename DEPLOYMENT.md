@@ -14,8 +14,10 @@
 ### 2. Test Server Setup (192.168.1.175)
 
 - Docker installed and running
+- Docker Compose installed
 - SSH access configured for Jenkins
 - User 'jenkins' with Docker permissions
+- Directory `/opt/booklib` created with proper permissions
 
 ## Jenkins Configuration Steps
 
@@ -68,14 +70,24 @@ sudo usermod -aG docker jenkins
 sudo -u jenkins docker ps
 ```
 
-## Automated Deployment
+## Automated Deployment with Docker Compose
 
 Deployment is fully automated through Jenkins pipeline:
 
 1. Push code to repository
 2. Jenkins automatically triggers build
 3. Builds and tests Docker container
-4. Deploys to test server
+4. Deploys using Docker Compose (orchestrates both frontend and API)
+5. Verifies both services are running
+6. Provides full-stack application access
+
+### Architecture
+
+- **Frontend**: React app served by Nginx (port 3000)
+- **Backend**: Flask API (port 5000)
+- **Network**: Custom Docker network for service communication
+- **Data**: Persistent volume for database storage
+
 5. Verifies deployment success
 
 ## Environment Variables

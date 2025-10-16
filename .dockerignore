@@ -29,3 +29,7 @@ Dockerfile
 # CI/CD files
 Jenkinsfile
 .github/
+
+# Docker Compose files (not needed in container)
+docker-compose*.yml
+.env*

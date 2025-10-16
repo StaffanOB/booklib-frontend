@@ -5,8 +5,9 @@ pipeline {
         DOCKER_IMAGE = 'booklib-frontend'
         DOCKER_TAG = "${BUILD_NUMBER}"
         TEST_SERVER = '192.168.1.175'
-        CONTAINER_NAME = 'booklib-frontend-app'
+        CONTAINER_NAME = 'booklib-frontend'
         CONTAINER_PORT = '3000'
+        DEPLOY_DIR = '/opt/booklib-frontend'
     }
     
     stages {
@@ -69,41 +70,60 @@ pipeline {
                     echo "Deploying to test server: ${TEST_SERVER}"
                     
                     sshagent(['test-server-key']) {
-                        // Copy image to test server
+                        // Copy image and compose files to test server
                         sh """
                             scp ${DOCKER_IMAGE}-${DOCKER_TAG}.tar jenkins@${TEST_SERVER}:/tmp/
+                            scp docker-compose.prod.yml jenkins@${TEST_SERVER}:/tmp/docker-compose.yml
                         """
                         
-                        // Deploy on test server
+                        // Deploy frontend service independently
                         sh """
                             ssh jenkins@${TEST_SERVER} "
-                                # Load the Docker image
+                                # Create deployment directory for frontend
+                                mkdir -p ${DEPLOY_DIR}
+                                cd ${DEPLOY_DIR}
+                                
+                                # Create external network if it doesn't exist
+                                docker network create booklib-net || true
+                                
+                                # Load the new frontend image
                                 docker load < /tmp/${DOCKER_IMAGE}-${DOCKER_TAG}.tar
                                 
-                                # Stop and remove existing container if it exists
-                                docker stop ${CONTAINER_NAME} || true
-                                docker rm ${CONTAINER_NAME} || true
+                                # Tag as latest
+                                docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                                 
-                                # Run new container
-                                docker run -d \\
-                                    --name ${CONTAINER_NAME} \\
-                                    -p ${CONTAINER_PORT}:80 \\
-                                    --restart unless-stopped \\
-                                    ${DOCKER_IMAGE}:${DOCKER_TAG}
+                                # Copy compose file
+                                cp /tmp/docker-compose.yml .
+                                
+                                # Stop existing frontend service
+                                docker-compose down || true
+                                
+                                # Start frontend service
+                                docker-compose up -d
                                 
                                 # Cleanup old images (keep last 3 builds)
                                 docker images ${DOCKER_IMAGE} --format '{{.Tag}}' | grep -E '^[0-9]+\$' | sort -nr | tail -n +4 | xargs -r docker rmi ${DOCKER_IMAGE}: || true
                                 
-                                # Clean up tar file
+                                # Clean up temporary files
                                 rm -f /tmp/${DOCKER_IMAGE}-${DOCKER_TAG}.tar
+                                rm -f /tmp/docker-compose.yml
                                 
                                 # Verify deployment
                                 echo 'Verifying deployment...'
-                                sleep 5
+                                sleep 10
+                                
+                                # Verify frontend deployment
                                 if docker ps | grep ${CONTAINER_NAME}; then
-                                    echo '✅ Deployment successful! Application is running on http://${TEST_SERVER}:${CONTAINER_PORT}'
+                                    echo '✅ Frontend deployed successfully!'
+                                    echo '🌐 Frontend available at: http://${TEST_SERVER}:${CONTAINER_PORT}'
+                                    
+                                    # Check if other BookLib services are running (informational)
+                                    echo ''
+                                    echo '📊 BookLib Services Status:'
+                                    docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep booklib || echo 'No other BookLib services detected'
                                 else
-                                    echo '❌ Deployment failed!'
+                                    echo '❌ Frontend deployment failed!'
+                                    docker-compose logs frontend
                                     exit 1
                                 fi
                             "
