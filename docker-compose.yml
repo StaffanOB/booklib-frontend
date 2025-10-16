@@ -5,9 +5,6 @@ services:
     restart: unless-stopped
     ports:
       - "3000:80"
-    environment:
-      NODE_ENV: production
-      REACT_APP_API_URL: http://booklib-api:5000
     networks:
       - booklib-net
 
