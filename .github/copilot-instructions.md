@@ -9,7 +9,7 @@ React 18 + TypeScript + Vite frontend for the BookLib book search application. P
 ### 3-Service Microservice Architecture
 
 - **booklib-db**: PostgreSQL database service (independent repository/deployment)
-- **booklib-api**: Flask REST API backend service (independent repository/deployment)  
+- **booklib-api**: Flask REST API backend service (independent repository/deployment)
 - **booklib-frontend**: React SPA frontend service (this repository)
 - **Network**: All services communicate via shared `booklib-net` Docker network
 - **Server**: All deployed to 192.168.1.175 with independent Jenkins pipelines
@@ -240,10 +240,14 @@ interface Review {
 // Response: { id: number; name: string }[]
 
 // POST /tags (requires auth)
-{ name: string }
+{
+  name: string;
+}
 
 // PUT /tags/{id} (requires auth)
-{ name: string }
+{
+  name: string;
+}
 
 // DELETE /tags/{id} (requires auth)
 
@@ -326,23 +330,25 @@ networks:
 ### API Service Layer (To Implement)
 
 Create `src/services/api.ts`:
-```typescript
-import axios from 'axios';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://booklib-api:5000'  // Container network
-  : 'http://192.168.1.175:5000'; // Local development
+```typescript
+import axios from "axios";
+
+const API_BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "http://booklib-api:5000" // Container network
+    : "http://192.168.1.175:5000"; // Local development
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Add JWT token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem("authToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -361,6 +367,7 @@ export default api;
 ### Search Integration
 
 Map emoji dropdown to API calls:
+
 - 🔍 Free Search → Query all fields (implement custom endpoint or client-side filtering)
 - 📚 Book Title → Filter by title field
 - 👤 Author Name → Filter by author field
