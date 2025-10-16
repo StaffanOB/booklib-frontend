@@ -98,6 +98,209 @@ Currently uses hardcoded book data in `App.tsx`. Book items structure:
 
 ## Integration with booklib-api
 
+### API Base URL
+
+- **Container-to-container**: `http://booklib-api:5000` (production)
+- **Local development**: `http://192.168.1.175:5000` (test server)
+- **All endpoints**: Prefix with base URL
+
+### Authentication
+
+- **Type**: JWT Bearer Token
+- **Header**: `Authorization: Bearer <token>`
+- **Login**: `POST /users/login` returns JWT token
+- **Protected routes**: Require `Authorization` header
+
+#### Auth Endpoints
+
+```typescript
+// POST /users/register
+{
+  username: string;
+  email: string;
+  password: string;
+}
+// Response: 201 Created | 400 Missing fields | 409 User exists
+
+// POST /users/login
+{
+  username: string;
+  password: string;
+}
+// Response: 200 { token: string } | 401 Invalid credentials
+```
+
+### Book Endpoints
+
+```typescript
+// GET /books - List all books
+// Response: { books: Book[] }
+
+// GET /books/{id} - Get single book
+// Response: Book object
+
+// GET /books/{id}/full - Get book with ratings, comments, reviews
+// Response: {
+//   id: number;
+//   title: string;
+//   author: string;
+//   description: string;
+//   publish_year: number | null;
+//   series: string | null;
+//   cover_url: string | null;
+//   average_rating: number | null;
+//   ratings: Rating[];
+//   comments: Comment[];
+//   reviews: Review[];
+// }
+
+// POST /books - Add book (requires auth)
+{
+  title: string; // required
+  isbn?: string;
+  description?: string;
+  publish_year?: number | string | null;
+  series?: string | null;
+  tags?: string[];
+  plugin?: "GoogleBooksPlugin" | "OpenLibraryPlugin";
+}
+// Response: 201 Created
+
+// PUT /books/{id} - Update book (requires auth)
+// DELETE /books/{id} - Delete book (requires auth)
+
+// POST /books/{id}/recheck - Recheck book info with plugin (requires auth)
+{
+  plugin?: "GoogleBooksPlugin" | "OpenLibraryPlugin";
+}
+```
+
+### Reviews, Ratings & Comments
+
+```typescript
+// Review object structure
+interface Review {
+  id: number;
+  book_id: number;
+  user_id: number;
+  username: string;
+  review_text: string;
+  reading_format: "paperback" | "audiobook" | "ebook";
+  created_at: string; // ISO 8601 datetime
+  updated_at: string;
+}
+
+// GET /reviews - All reviews
+// GET /reviews/{review_id} - Single review
+// GET /reviews/book/{book_id} - Reviews for a book
+// GET /reviews/user/{user_id} - Reviews by a user
+
+// POST /reviews (requires auth)
+{
+  book_id: number;
+  review_text: string;
+  reading_format: "paperback" | "audiobook" | "ebook";
+}
+// Response: 201 Created | 400 Invalid/already reviewed | 404 Book not found
+
+// PUT /reviews/{review_id} (requires auth, own reviews only)
+{
+  review_text?: string;
+  reading_format?: "paperback" | "audiobook" | "ebook";
+}
+
+// DELETE /reviews/{review_id} (requires auth, own reviews only)
+
+// GET /books/{id}/ratings - Average rating for book
+// Response: { average: number | null }
+
+// POST /books/{id}/ratings (requires auth, one per user per book)
+{ rating: number }
+// Response: 201 Created | 409 Already rated
+
+// PUT /books/{id}/ratings/{rating_id} (requires auth)
+{ rating: number }
+
+// DELETE /books/{id}/ratings/{rating_id} (requires auth)
+
+// GET /books/{id}/comments - Comments for book
+// POST /books/{id}/comments (requires auth)
+{ text: string }
+
+// PUT /books/{id}/comments/{comment_id} (requires auth)
+{ text: string }
+
+// DELETE /books/{id}/comments/{comment_id} (requires auth)
+```
+
+### Tags & Plugins
+
+```typescript
+// GET /tags - All tags
+// Response: { id: number; name: string }[]
+
+// POST /tags (requires auth)
+{ name: string }
+
+// PUT /tags/{id} (requires auth)
+{ name: string }
+
+// DELETE /tags/{id} (requires auth)
+
+// GET /plugins - List available plugins
+// POST /plugins/load - Load plugin
+// POST /plugins/unload - Unload plugin
+// POST /plugins/{plugin_name}/run - Execute plugin
+```
+
+### User Management
+
+```typescript
+// GET /users (requires auth) - All users
+// GET /users/{user_id} (requires auth) - Single user
+// DELETE /users/{user_id} (requires auth) - Delete user
+
+// User object: { id: number; username: string; email: string }
+```
+
+### TypeScript Interfaces
+
+```typescript
+interface Book {
+  id: number;
+  title: string;
+  author?: string;
+  description?: string;
+  isbn?: string;
+  publish_year?: number | null;
+  series?: string | null;
+  cover_url?: string | null;
+  tags?: string[];
+}
+
+interface Rating {
+  id: number;
+  user_id: number;
+  rating: number;
+}
+
+interface Comment {
+  id: number;
+  user_id: number;
+  text: string;
+}
+
+interface AuthResponse {
+  token: string;
+}
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+}
+```
+
 ### Network Configuration
 
 ```yaml
@@ -118,16 +321,60 @@ networks:
 - Frontend waits for API `/health` endpoint
 - Both services share the same external network
 
-## Future Development
+## Next Steps for Frontend Integration
 
-### Planned Integrations
+### API Service Layer (To Implement)
 
-- **API Connection**: Replace static data with REST API calls to booklib-api
-- **Authentication**: JWT tokens from login dialog → API authorization
-- **State Management**: Redux for API state, user sessions
-- **Search Functionality**: Dropdown types map to API endpoints (/search/free, /search/title, /search/author)
+Create `src/services/api.ts`:
+```typescript
+import axios from 'axios';
 
-### Testing Strategy
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'http://booklib-api:5000'  // Container network
+  : 'http://192.168.1.175:5000'; // Local development
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add JWT token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
+```
+
+### State Management
+
+- **Authentication State**: User login status, JWT token storage
+- **Book Search State**: Search results, filters, pagination
+- **UI State**: Loading indicators, error messages
+
+### Search Integration
+
+Map emoji dropdown to API calls:
+- 🔍 Free Search → Query all fields (implement custom endpoint or client-side filtering)
+- 📚 Book Title → Filter by title field
+- 👤 Author Name → Filter by author field
+
+### Current Status
+
+- ✅ UI components built and styled
+- ✅ API documentation complete
+- ✅ TypeScript interfaces defined
+- ⏳ API service layer (next task)
+- ⏳ Authentication flow (next task)
+- ⏳ Search functionality (next task)
+
+## Testing Strategy
 
 - **Unit Tests**: Component testing (framework TBD)
 - **Integration**: API communication testing
