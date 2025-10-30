@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ListGroup from "./components/ListGroup";
 import BookSearchBar from "./components/BookSearchBar";
 import BookSearchResultItem from "./components/BookSearchResultItem";
@@ -9,10 +9,21 @@ import "./App.css";
 type ViewMode = "home" | "browse";
 
 function App() {
-  const [viewMode, setViewMode] = useState<ViewMode>("home");
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    // Initialize from localStorage if available
+    const saved = localStorage.getItem("viewMode");
+    return (saved as ViewMode) || "home";
+  });
+
+  // Save viewMode to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("viewMode", viewMode);
+  }, [viewMode]);
 
   const handleBrowseClick = () => {
-    setViewMode("browse");
+    if (viewMode !== "browse") {
+      setViewMode("browse");
+    }
   };
 
   const handleLogoClick = () => {
@@ -21,7 +32,12 @@ function App() {
 
   return (
     <>
-      <TopBar onBrowseClick={handleBrowseClick} />
+      <TopBar
+        onBrowseClick={handleBrowseClick}
+        onLogoClick={handleLogoClick}
+        showLogo={viewMode === "browse"}
+        searchBar={viewMode === "browse" ? <BookSearchBar /> : undefined}
+      />
       <div
         className={`app-container ${
           viewMode === "browse" ? "browse-mode" : ""
@@ -40,16 +56,6 @@ function App() {
           </div>
         ) : (
           <div className="browse-content">
-            <div className="browse-header">
-              <img
-                src="/logo.png"
-                alt="BookLib Logo"
-                className="logo-small"
-                onClick={handleLogoClick}
-                style={{ cursor: "pointer" }}
-              />
-              <BookSearchBar />
-            </div>
             <BookTable />
           </div>
         )}
