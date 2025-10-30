@@ -2,7 +2,11 @@ import { useState } from "react";
 import "./TopBar.css";
 import LoginDialog from "./LoginDialog";
 
-function TopBar() {
+interface TopBarProps {
+  onBrowseClick?: () => void;
+}
+
+function TopBar({ onBrowseClick }: TopBarProps) {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   const handleLoginClick = () => {
@@ -13,13 +17,19 @@ function TopBar() {
     setIsLoginOpen(false);
   };
 
+  const handleBrowseClick = () => {
+    if (onBrowseClick) {
+      onBrowseClick();
+    }
+  };
+
   return (
     <>
       <nav className="topbar">
         <div className="topbar-content">
           <div className="topbar-left"></div>
           <div className="topbar-right">
-            <button className="browse-btn" onClick={handleLoginClick}>
+            <button className="browse-btn" onClick={handleBrowseClick}>
               browse
             </button>
             |

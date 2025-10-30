@@ -4,6 +4,7 @@
   position: relative;
 }
 
+/* Home view - centered layout */
 .centered-content {
   position: absolute;
   top: calc(50% - 100px); /* Move 80px higher than center */
@@ -19,4 +20,49 @@
   max-width: 400px;
   height: auto;
   margin-bottom: 1rem; /* Space between logo and search bar */
+}
+
+/* Browse view - top-left layout */
+.app-container.browse-mode {
+  position: static;
+}
+
+.browse-content {
+  padding: 20px;
+}
+
+.browse-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 10px 0;
+}
+
+.logo-small {
+  max-width: 120px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.browse-header .search-container {
+  flex: 1;
+  max-width: 600px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .browse-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logo-small {
+    max-width: 100px;
+  }
+
+  .browse-header .search-container {
+    width: 100%;
+    max-width: none;
+  }
 }
